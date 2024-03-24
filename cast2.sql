@@ -38,7 +38,7 @@ CREATE TABLE "Vykonava_cinnost" (
 	FOREIGN KEY ("ID_cinnosti") REFERENCES "Automechanik"("ID_mechanika")
 );
 
--- N?zev vozidlo je zvolen kv?li kolizi kl??ov?ho slova "auto"
+-- Nazev vozidlo je zvolen kvuli kolizi klicoveho slova "auto"
 CREATE TABLE "Vozidlo" (
     "ID_auta" INT GENERATED AS IDENTITY PRIMARY KEY,
     "Znacka" VARCHAR(100),
@@ -70,7 +70,7 @@ CREATE TABLE "Material" (
 );
 
 
--- P?id?n? ciz?ch kl??? a? po vytvo?en? tabulek, z d?vodu reference na zat?m neexistuj?c? tabulku
+-- Pridani cizich klicu az po vytvoreni tabulek, z duvodu reference na zatim neexistujici tabulku
 ALTER TABLE "Zakaznik" ADD FOREIGN KEY ("ID_opravy") REFERENCES "Oprava"("ID_opravy");
 ALTER TABLE "Zakaznik" ADD FOREIGN KEY ("ID_auta") REFERENCES "Vozidlo"("ID_auta");
 
@@ -81,9 +81,9 @@ ALTER TABLE "Oprava" ADD FOREIGN KEY ("ID_auta") REFERENCES "Vozidlo"("ID_auta")
 ALTER TABLE "Oprava" ADD FOREIGN KEY ("ID_zakaznika") REFERENCES "Zakaznik"("ID_zakaznika");
 
 
--- Dopln?n? konkr?tn?ch z?znam?
+-- Doplneni konkretnich zaznamu
 INSERT INTO "Automechanik" ("Jmeno", "Prijmeni", "Rodne_cislo")
-VALUES ('Jan', 'Nov?k', '9307154197');
+VALUES ('Jan', 'Novak', '9307154197');
 INSERT INTO "Automechanik" ("Jmeno", "Prijmeni", "Rodne_cislo")
 VALUES ('Petr', 'Svoboda', '0854267403');
 
@@ -93,17 +93,17 @@ INSERT INTO "Specialista" ("Specializace", "ID_specialistu")
 VALUES ('Karoserie', 2);
 
 INSERT INTO "Zakaznik" ("Jmeno", "Prijmeni", "Telefon", "ID_opravy", "ID_auta")
-VALUES ('Karel', 'Nov?', 123456789, NULL, NULL);
+VALUES ('Karel', 'Novy', 123456789, NULL, NULL);
 INSERT INTO "Zakaznik" ("Jmeno", "Prijmeni", "Telefon", "ID_opravy", "ID_auta")
-VALUES ('Eva', 'Svobodov?', 987654321, NULL, NULL);
+VALUES ('Eva', 'Svobodova', 987654321, NULL, NULL);
 
 INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_cinnosti")
-VALUES ('V?m?na brzdov?ch desti?ek', 120, 2);
+VALUES ('Vymena brzdovych desticek', 120, 2);
 INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_cinnosti")
-VALUES ('V?m?na oleje', 60, 1);
+VALUES ('Vymena oleje', 60, 1);
 
 INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ", "ID_opravy", "ID_zakaznika")
-VALUES ('?koda', 'Octavia', 'ABC123', NULL, NULL);
+VALUES ('Skoda', 'Octavia', 'ABC123', NULL, NULL);
 INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ", "ID_opravy", "ID_zakaznika")
 VALUES ('Ford', 'Focus', 'XYZ987', NULL, NULL);
 
@@ -118,7 +118,7 @@ INSERT INTO "Faktura" ("Datum_splatnosti", "Celkova_castka", "Forma_uhrady")
 VALUES (TO_DATE('2024-04-25', 'yyyy/mm/dd'), '2500', 'Hotov?');
 
 INSERT INTO "Material" ("Nazev", "Porizovaci_cena")
-VALUES ('Brzdov? desti?ky', 300);
+VALUES ('Brzdove desticky', 300);
 INSERT INTO "Material" ("Nazev", "Porizovaci_cena")
 VALUES ('Olej', 200);
 
