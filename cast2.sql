@@ -11,7 +11,8 @@ CREATE TABLE "Automechanik" (
     "ID_mechanika" INT GENERATED AS IDENTITY PRIMARY KEY,
     "Jmeno" VARCHAR(100),
     "Prijmeni" VARCHAR(100),
-	"Rodne_cislo" INT
+	"Rodne_cislo" VARCHAR(10),
+    CONSTRAINT check_format CHECK (REGEXP_LIKE("Rodne_cislo", '^[0-9]{2}(0[1-9]|1[0-2]|5[0-9]|6[0-2])(0[1-9]|[1-2][0-9]|3[01])[0-9]{4}$'))
 );
 
 CREATE TABLE "Specialista" (
@@ -82,9 +83,9 @@ ALTER TABLE "Oprava" ADD FOREIGN KEY ("ID_zakaznika") REFERENCES "Zakaznik"("ID_
 
 -- Dopln?n? konkr?tn?ch z?znam?
 INSERT INTO "Automechanik" ("Jmeno", "Prijmeni", "Rodne_cislo")
-VALUES ('Jan', 'Nov?k', 123456789);
+VALUES ('Jan', 'Nov?k', '9307154197');
 INSERT INTO "Automechanik" ("Jmeno", "Prijmeni", "Rodne_cislo")
-VALUES ('Petr', 'Svoboda', 987654321);
+VALUES ('Petr', 'Svoboda', '0854267403');
 
 INSERT INTO "Specialista" ("Specializace", "ID_specialistu")
 VALUES ('Elektrika', 1);
