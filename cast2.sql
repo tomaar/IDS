@@ -92,9 +92,9 @@ INSERT INTO "Specialista" ("Specializace", "ID_specialistu")
 VALUES ('Karoserie', 2);
 
 INSERT INTO "Zakaznik" ("Jmeno", "Prijmeni", "Telefon", "ID_opravy", "ID_auta")
-VALUES ('Karel', 'Nov?', 123456789, 1, 1);
+VALUES ('Karel', 'Nov?', 123456789, NULL, NULL);
 INSERT INTO "Zakaznik" ("Jmeno", "Prijmeni", "Telefon", "ID_opravy", "ID_auta")
-VALUES ('Eva', 'Svobodov?', 987654321, 2, 2);
+VALUES ('Eva', 'Svobodov?', 987654321, NULL, NULL);
 
 INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_cinnosti")
 VALUES ('V?m?na brzdov?ch desti?ek', 120, 2);
@@ -102,14 +102,14 @@ INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_cinnosti")
 VALUES ('V?m?na oleje', 60, 1);
 
 INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ", "ID_opravy", "ID_zakaznika")
-VALUES ('?koda', 'Octavia', 'ABC123', 1, 1);
+VALUES ('?koda', 'Octavia', 'ABC123', NULL, NULL);
 INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ", "ID_opravy", "ID_zakaznika")
-VALUES ('Ford', 'Focus', 'XYZ987', 2, 2);
+VALUES ('Ford', 'Focus', 'XYZ987', NULL, NULL);
 
 INSERT INTO "Oprava" ("ID_opravy", "Termin", "ID_auta", "ID_zakaznika")
-VALUES (1, TO_DATE('2024-03-25', 'yyyy/mm/dd'), 1, 1);
+VALUES (1, TO_DATE('2024-03-25', 'yyyy/mm/dd'), NULL, NULL);
 INSERT INTO "Oprava" ("ID_opravy", "Termin", "ID_auta", "ID_zakaznika")
-VALUES (2, TO_DATE('2024-03-27', 'yyyy/mm/dd'), 2, 2);
+VALUES (2, TO_DATE('2024-03-27', 'yyyy/mm/dd'), NULL, NULL);
 
 INSERT INTO "Faktura" ("Datum_splatnosti", "Celkova_castka", "Forma_uhrady")
 VALUES (TO_DATE('2024-04-27', 'yyyy/mm/dd'), '3500', 'P?evodem');
@@ -120,3 +120,22 @@ INSERT INTO "Material" ("Nazev", "Porizovaci_cena")
 VALUES ('Brzdov? desti?ky', 300);
 INSERT INTO "Material" ("Nazev", "Porizovaci_cena")
 VALUES ('Olej', 200);
+
+UPDATE "Zakaznik"
+SET "ID_opravy" = 1, "ID_auta" = 1
+WHERE "ID_zakaznika" = 1;
+UPDATE "Zakaznik"
+SET "ID_opravy" = 2, "ID_auta" = 2
+WHERE "ID_zakaznika" = 2;
+UPDATE "Vozidlo"
+SET "ID_opravy" = 1, "ID_zakaznika" = 1
+WHERE "ID_auta" = 1;
+UPDATE "Vozidlo"
+SET "ID_opravy" = 2, "ID_zakaznika" = 2
+WHERE "ID_auta" = 2;
+UPDATE "Oprava"
+SET "ID_auta" = 1, "ID_zakaznika" = 1
+WHERE "ID_opravy" = 1;
+UPDATE "Oprava"
+SET "ID_auta" = 2, "ID_zakaznika" = 2
+WHERE "ID_opravy" = 2;
