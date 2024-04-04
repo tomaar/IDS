@@ -1,12 +1,3 @@
--- DROP TABLE "Specialista" CASCADE CONSTRAINTS;
--- DROP TABLE "Zakaznik" CASCADE CONSTRAINTS;
--- DROP TABLE "Oprava" CASCADE CONSTRAINTS;
--- DROP TABLE "Vozidlo" CASCADE CONSTRAINTS;
--- DROP TABLE "Material" CASCADE CONSTRAINTS;
--- DROP TABLE "Faktura" CASCADE CONSTRAINTS;
--- DROP TABLE "Vykonava_cinnost" CASCADE CONSTRAINTS;
--- DROP TABLE "Automechanik" CASCADE CONSTRAINTS;
-
 CREATE TABLE "Automechanik" (
     "ID_mechanika" INT GENERATED AS IDENTITY PRIMARY KEY,
     "Jmeno" VARCHAR(100),
@@ -16,8 +7,8 @@ CREATE TABLE "Automechanik" (
 );
 
 CREATE TABLE "Specialista" (
+    "ID_specialistu" INT GENERATED AS IDENTITY PRIMARY KEY,
     "Specializace" VARCHAR(100),
-	"ID_specialistu" INT,
 	FOREIGN KEY ("ID_specialistu") REFERENCES "Automechanik"("ID_mechanika")
 );
 
@@ -87,10 +78,10 @@ VALUES ('Jan', 'Novak', '9307154197');
 INSERT INTO "Automechanik" ("Jmeno", "Prijmeni", "Rodne_cislo")
 VALUES ('Petr', 'Svoboda', '0854267403');
 
-INSERT INTO "Specialista" ("Specializace", "ID_specialistu")
-VALUES ('Elektrika', 1);
-INSERT INTO "Specialista" ("Specializace", "ID_specialistu")
-VALUES ('Karoserie', 2);
+INSERT INTO "Specialista" ("Specializace")
+VALUES ('Elektrika');
+INSERT INTO "Specialista" ("Specializace")
+VALUES ('Karoserie');
 
 INSERT INTO "Zakaznik" ("Jmeno", "Prijmeni", "Telefon", "ID_opravy", "ID_auta")
 VALUES ('Karel', 'Novy', 123456789, NULL, NULL);
