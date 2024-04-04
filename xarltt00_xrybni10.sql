@@ -1,3 +1,12 @@
+DROP TABLE "Specialista" CASCADE CONSTRAINTS;
+DROP TABLE "Zakaznik" CASCADE CONSTRAINTS;
+DROP TABLE "Oprava" CASCADE CONSTRAINTS;
+DROP TABLE "Vozidlo" CASCADE CONSTRAINTS;
+DROP TABLE "Material" CASCADE CONSTRAINTS;
+DROP TABLE "Faktura" CASCADE CONSTRAINTS;
+DROP TABLE "Vykonava_cinnost" CASCADE CONSTRAINTS;
+DROP TABLE "Automechanik" CASCADE CONSTRAINTS;
+
 CREATE TABLE "Automechanik" (
     "ID_mechanika" INT GENERATED AS IDENTITY PRIMARY KEY,
     "Jmeno" VARCHAR(100),
@@ -16,9 +25,7 @@ CREATE TABLE "Zakaznik" (
     "ID_zakaznika" INT GENERATED AS IDENTITY PRIMARY KEY,
     "Jmeno" VARCHAR(100),
     "Prijmeni" VARCHAR(100),
-    "Telefon" INT,
-	"ID_opravy" INT,
-	"ID_auta" INT
+    "Telefon" INT
 );
 
 CREATE TABLE "Vykonava_cinnost" (
@@ -34,9 +41,7 @@ CREATE TABLE "Vozidlo" (
     "ID_auta" INT GENERATED AS IDENTITY PRIMARY KEY,
     "Znacka" VARCHAR(100),
     "Model" VARCHAR(100),
-    "SPZ" VARCHAR(100),
-	"ID_opravy" INT,
-	"ID_zakaznika" INT
+    "SPZ" VARCHAR(100)
 );
 
 CREATE TABLE "Oprava" (
@@ -44,7 +49,9 @@ CREATE TABLE "Oprava" (
 	FOREIGN KEY ("ID_opravy") REFERENCES "Vykonava_cinnost"("Cislo_zakazky"),
     "Termin" DATE,
 	"ID_auta" INT,
-	"ID_zakaznika" INT
+	"ID_zakaznika" INT,
+    FOREIGN KEY ("ID_auta") REFERENCES "Vozidlo"("ID_auta"),
+    FOREIGN KEY ("ID_zakaznika") REFERENCES "Zakaznik"("ID_zakaznika")
 );
 
 CREATE TABLE "Faktura" (
@@ -61,17 +68,6 @@ CREATE TABLE "Material" (
 );
 
 
--- Pridani cizich klicu az po vytvoreni tabulek, z duvodu reference na zatim neexistujici tabulku
-ALTER TABLE "Zakaznik" ADD FOREIGN KEY ("ID_opravy") REFERENCES "Oprava"("ID_opravy");
-ALTER TABLE "Zakaznik" ADD FOREIGN KEY ("ID_auta") REFERENCES "Vozidlo"("ID_auta");
-
-ALTER TABLE "Vozidlo" ADD FOREIGN KEY ("ID_opravy") REFERENCES "Oprava"("ID_opravy");
-ALTER TABLE "Vozidlo" ADD FOREIGN KEY ("ID_zakaznika") REFERENCES "Zakaznik"("ID_zakaznika");
-
-ALTER TABLE "Oprava" ADD FOREIGN KEY ("ID_auta") REFERENCES "Vozidlo"("ID_auta");
-ALTER TABLE "Oprava" ADD FOREIGN KEY ("ID_zakaznika") REFERENCES "Zakaznik"("ID_zakaznika");
-
-
 -- Doplneni konkretnich zaznamu
 INSERT INTO "Automechanik" ("Jmeno", "Prijmeni", "Rodne_cislo")
 VALUES ('Jan', 'Novak', '9307154197');
@@ -83,25 +79,25 @@ VALUES ('Elektrika');
 INSERT INTO "Specialista" ("Specializace")
 VALUES ('Karoserie');
 
-INSERT INTO "Zakaznik" ("Jmeno", "Prijmeni", "Telefon", "ID_opravy", "ID_auta")
-VALUES ('Karel', 'Novy', 123456789, NULL, NULL);
-INSERT INTO "Zakaznik" ("Jmeno", "Prijmeni", "Telefon", "ID_opravy", "ID_auta")
-VALUES ('Eva', 'Svobodova', 987654321, NULL, NULL);
+INSERT INTO "Zakaznik" ("Jmeno", "Prijmeni", "Telefon")
+VALUES ('Karel', 'Novy', 123456789);
+INSERT INTO "Zakaznik" ("Jmeno", "Prijmeni", "Telefon")
+VALUES ('Eva', 'Svobodova', 987654321);
 
 INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_cinnosti")
 VALUES ('Vymena brzdovych desticek', 120, 2);
 INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_cinnosti")
 VALUES ('Vymena oleje', 60, 1);
 
-INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ", "ID_opravy", "ID_zakaznika")
-VALUES ('Skoda', 'Octavia', 'ABC123', NULL, NULL);
-INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ", "ID_opravy", "ID_zakaznika")
-VALUES ('Ford', 'Focus', 'XYZ987', NULL, NULL);
+INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ")
+VALUES ('Skoda', 'Octavia', 'ABC123');
+INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ")
+VALUES ('Ford', 'Focus', 'XYZ987');
 
 INSERT INTO "Oprava" ("ID_opravy", "Termin", "ID_auta", "ID_zakaznika")
-VALUES (1, TO_DATE('2024-03-25', 'yyyy/mm/dd'), NULL, NULL);
+VALUES (1, TO_DATE('2024-03-25', 'yyyy/mm/dd'), 1, 1);
 INSERT INTO "Oprava" ("ID_opravy", "Termin", "ID_auta", "ID_zakaznika")
-VALUES (2, TO_DATE('2024-03-27', 'yyyy/mm/dd'), NULL, NULL);
+VALUES (2, TO_DATE('2024-03-27', 'yyyy/mm/dd'), 2, 2);
 
 INSERT INTO "Faktura" ("Datum_splatnosti", "Celkova_castka", "Forma_uhrady")
 VALUES (TO_DATE('2024-04-27', 'yyyy/mm/dd'), '3500', 'P?evodem');
@@ -112,22 +108,3 @@ INSERT INTO "Material" ("Nazev", "Porizovaci_cena")
 VALUES ('Brzdove desticky', 300);
 INSERT INTO "Material" ("Nazev", "Porizovaci_cena")
 VALUES ('Olej', 200);
-
-UPDATE "Zakaznik"
-SET "ID_opravy" = 1, "ID_auta" = 1
-WHERE "ID_zakaznika" = 1;
-UPDATE "Zakaznik"
-SET "ID_opravy" = 2, "ID_auta" = 2
-WHERE "ID_zakaznika" = 2;
-UPDATE "Vozidlo"
-SET "ID_opravy" = 1, "ID_zakaznika" = 1
-WHERE "ID_auta" = 1;
-UPDATE "Vozidlo"
-SET "ID_opravy" = 2, "ID_zakaznika" = 2
-WHERE "ID_auta" = 2;
-UPDATE "Oprava"
-SET "ID_auta" = 1, "ID_zakaznika" = 1
-WHERE "ID_opravy" = 1;
-UPDATE "Oprava"
-SET "ID_auta" = 2, "ID_zakaznika" = 2
-WHERE "ID_opravy" = 2;
