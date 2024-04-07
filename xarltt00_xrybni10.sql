@@ -194,7 +194,7 @@ WHERE EXISTS (
 );
 
 
--- najde vsechny zakazniky, kteri maji auto znacky Skoda
+-- najde vsechny zakazniky, kteri platili prevodem
 SELECT * FROM "Zakaznik"
 WHERE "ID_zakaznika" IN (
     SELECT DISTINCT "ID_zakaznika" FROM "Oprava"
