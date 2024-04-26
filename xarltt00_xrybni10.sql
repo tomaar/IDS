@@ -105,6 +105,8 @@ INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ")
 VALUES ('Skoda', 'Fabia', 'DEF456');
 INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ")
 VALUES ('Skoda', 'Superb', 'GHI789');
+INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ")
+VALUES ('Volkswagen', 'Golf', 'JKL321');
 
 INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_mechanika")
 VALUES ('Vymena brzdovych desticek', 120, 2);
@@ -114,6 +116,8 @@ INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_mechanika")
 VALUES ('Lakovani', 90, 2);
 INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_mechanika")
 VALUES ('Vymena svetel', 30, 1);
+INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_mechanika")
+VALUES ('Vymena brzdovych desticek', 120, 3);
 
 INSERT INTO "Oprava" ("Termin", "ID_auta", "ID_zakaznika")
 VALUES (TO_DATE('2024-03-25', 'yyyy/mm/dd'), 1, 1);
@@ -121,6 +125,8 @@ INSERT INTO "Oprava" ("Termin", "ID_auta", "ID_zakaznika")
 VALUES (TO_DATE('2024-03-27', 'yyyy/mm/dd'), 2, 2);
 INSERT INTO "Oprava" ("Termin", "ID_auta", "ID_zakaznika")
 VALUES (TO_DATE('2024-03-27', 'yyyy/mm/dd'), 3, 3);
+INSERT INTO "Oprava" ("Termin", "ID_auta", "ID_zakaznika")
+VALUES (TO_DATE('2024-03-27', 'yyyy/mm/dd'), 1, 3);
 
 
 INSERT INTO "RelCinnostiOpravy" ("ID_opravy", "ID_cinnosti")
@@ -131,6 +137,8 @@ INSERT INTO "RelCinnostiOpravy" ("ID_opravy", "ID_cinnosti")
 VALUES (2, 3);
 INSERT INTO "RelCinnostiOpravy" ("ID_opravy", "ID_cinnosti")
 VALUES (3, 4);
+INSERT INTO "RelCinnostiOpravy" ("ID_opravy", "ID_cinnosti")
+VALUES (4, 5);
 
 
 INSERT INTO "Faktura" ("Datum_splatnosti", "Celkova_castka", "Forma_uhrady", "ID_opravy")
@@ -213,3 +221,69 @@ BEGIN
     END IF;
 END;
 /
+
+-- udeleni prav uzivateli
+GRANT ALL ON "Specialista" TO xrybni10;
+GRANT ALL ON "Zakaznik" TO xrybni10;
+GRANT ALL ON "Oprava" TO xrybni10;
+GRANT ALL ON "Vozidlo" TO xrybni10;
+GRANT ALL ON "Material" TO xrybni10;
+GRANT ALL ON "Faktura" TO xrybni10;
+GRANT ALL ON "Vykonava_cinnost" TO xrybni10;
+GRANT ALL ON "Automechanik" TO xrybni10;
+GRANT ALL ON "RelCinnostiOpravy" TO xrybni10;
+-- todo: view + procedures
+
+-- zobrazeni prav uzivatelu
+SELECT grantee, table_name, privilege
+FROM all_tab_privs
+WHERE table_name = 'Specialista';
+
+
+-- spocte pocet aut podle zeme puvodu
+WITH auta AS (
+    SELECT 
+        "ID_auta", 
+        "Znacka", 
+        "SPZ",
+        CASE
+            WHEN "Znacka" = 'Skoda' THEN 'CZ'
+            WHEN "Znacka" = 'Ford' THEN 'US'
+            WHEN "Znacka" = 'Volkswagen' THEN 'DE'
+            ELSE 'Jine'
+        END AS "Zeme_puvodu"
+    FROM
+        "Vozidlo"
+)
+SELECT "Zeme_puvodu", COUNT("Zeme_puvodu")
+FROM auta
+GROUP BY "Zeme_puvodu";
+
+
+-- ukazkove provedeni SELECT dotazu
+EXPLAIN PLAN FOR
+SELECT v."Znacka", v."Model", COUNT(o."ID_opravy") AS Pocet_oprav
+FROM "Vozidlo" v
+JOIN "Oprava" o ON v."ID_auta" = o."ID_auta"
+GROUP BY v."Znacka", v."Model";
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY());
+
+-- pred optimalizaci
+EXPLAIN PLAN FOR
+SELECT v."Znacka", v."Model", COUNT(o."ID_opravy") AS Pocet_oprav
+FROM "Vozidlo" v
+JOIN "Oprava" o ON v."ID_auta" = o."ID_auta"
+GROUP BY v."Znacka", v."Model";
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY());
+
+-- vytvoreni indexu
+CREATE INDEX idx_oprava_id_auta ON "Oprava" ("ID_auta");
+
+-- po optimalizaci
+EXPLAIN PLAN FOR
+SELECT v."Znacka", v."Model", COUNT(o."ID_opravy") AS Pocet_oprav
+FROM "Vozidlo" v
+JOIN "Oprava" o ON v."ID_auta" = o."ID_auta"
+GROUP BY v."Znacka", v."Model";
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY());
+
