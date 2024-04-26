@@ -249,12 +249,25 @@ GROUP BY "Zeme_puvodu";
 
 
 -- ukazkove provedeni SELECT dotazu
+EXPLAIN PLAN FOR
 SELECT v."Znacka", v."Model", COUNT(o."ID_opravy") AS Pocet_oprav
 FROM "Vozidlo" v
 JOIN "Oprava" o ON v."ID_auta" = o."ID_auta"
 GROUP BY v."Znacka", v."Model";
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY());
 
--- CREATE INDEX idx_oprava_id_auta ON "Oprava" ("ID_auta");
+-- pred optimalizaci
+EXPLAIN PLAN FOR
+SELECT v."Znacka", v."Model", COUNT(o."ID_opravy") AS Pocet_oprav
+FROM "Vozidlo" v
+JOIN "Oprava" o ON v."ID_auta" = o."ID_auta"
+GROUP BY v."Znacka", v."Model";
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY());
+
+-- vytvoreni indexu
+CREATE INDEX idx_oprava_id_auta ON "Oprava" ("ID_auta");
+
+-- po optimalizaci
 EXPLAIN PLAN FOR
 SELECT v."Znacka", v."Model", COUNT(o."ID_opravy") AS Pocet_oprav
 FROM "Vozidlo" v
