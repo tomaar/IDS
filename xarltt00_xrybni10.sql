@@ -1,12 +1,12 @@
--- DROP TABLE "Specialista" CASCADE CONSTRAINTS;
--- DROP TABLE "Zakaznik" CASCADE CONSTRAINTS;
--- DROP TABLE "Oprava" CASCADE CONSTRAINTS;
--- DROP TABLE "Vozidlo" CASCADE CONSTRAINTS;
--- DROP TABLE "Material" CASCADE CONSTRAINTS;
--- DROP TABLE "Faktura" CASCADE CONSTRAINTS;
--- DROP TABLE "Vykonava_cinnost" CASCADE CONSTRAINTS;
--- DROP TABLE "Automechanik" CASCADE CONSTRAINTS;
--- DROP TABLE "RelCinnostiOpravy" CASCADE CONSTRAINTS;
+DROP TABLE "Specialista" CASCADE CONSTRAINTS;
+DROP TABLE "Zakaznik" CASCADE CONSTRAINTS;
+DROP TABLE "Oprava" CASCADE CONSTRAINTS;
+DROP TABLE "Vozidlo" CASCADE CONSTRAINTS;
+DROP TABLE "Material" CASCADE CONSTRAINTS;
+DROP TABLE "Faktura" CASCADE CONSTRAINTS;
+DROP TABLE "Vykonava_cinnost" CASCADE CONSTRAINTS;
+DROP TABLE "Automechanik" CASCADE CONSTRAINTS;
+DROP TABLE "RelCinnostiOpravy" CASCADE CONSTRAINTS;
 
 CREATE TABLE "Automechanik" (
     "ID_mechanika" INT GENERATED AS IDENTITY PRIMARY KEY,
@@ -134,7 +134,7 @@ VALUES (3, 4);
 
 
 INSERT INTO "Faktura" ("Datum_splatnosti", "Celkova_castka", "Forma_uhrady", "ID_opravy")
-VALUES (TO_DATE('2024-04-27', 'yyyy/mm/dd'), '3500', 'Prevodem', 1);
+VALUES (TO_DATE('2024-04-26', 'yyyy/mm/dd'), '3500', 'Prevodem', 1);
 INSERT INTO "Faktura" ("Datum_splatnosti", "Celkova_castka", "Forma_uhrady", "ID_opravy")
 VALUES (TO_DATE('2024-04-25', 'yyyy/mm/dd'), '2500', 'Hotove', 2);
 INSERT INTO "Faktura" ("Datum_splatnosti", "Celkova_castka", "Forma_uhrady", "ID_opravy")
@@ -146,59 +146,70 @@ VALUES ('Brzdove desticky', 300);
 INSERT INTO "Material" ("Nazev", "Porizovaci_cena")
 VALUES ('Olej', 200);
 
+-- Trigger na odstraneni zaznamu z tabulky Specialista, pokud se odstranuje zaznam z tabulky Automechanik, se stejnym ID
+CREATE TRIGGER odstraneni_specialisty
+    BEFORE DELETE ON "Automechanik"
+    FOR EACH ROW
+DECLARE
+    id_specialisty "Automechanik"."ID_mechanika"%TYPE;
+BEGIN
+    id_specialisty := :OLD."ID_mechanika";
 
+    DELETE FROM "Specialista" WHERE "ID_specialistu" = id_specialisty;
+END;
+/
 
--- najde vsechny vozy Skoda, ktere jsou v databazi
-SELECT * FROM "Vozidlo"
-WHERE "Znacka" = 'Skoda';
+-- Trigger na odstraneni zaznamu z tabulky Oprava, pokud se odstranuje zaznam z tabulky Faktura, se stejnym ID
+CREATE TRIGGER odstraneni_opravy
+    BEFORE DELETE ON "Faktura"
+    FOR EACH ROW
+DECLARE
+    id_opravy "Oprava"."ID_opravy"%TYPE;
+BEGIN
+    id_opravy := :OLD."ID_opravy";
+    
+    DELETE FROM "Oprava" WHERE "ID_opravy" = id_opravy;
+END;
+/
 
+-- Procedura na vytvoreni opravy, prijma potrebne informace, cinnosti prijma ve forme listu
+CREATE OR REPLACE PROCEDURE vytvoreni_opravy(
+    p_termin DATE,
+    p_id_auta INT,
+    p_id_zakaznika INT,
+    p_cinnosti SYS.ODCINUMBERLIST
+) AS
+    v_oprava_id INT;
+BEGIN
+    INSERT INTO "Oprava" ("Termin", "ID_auta", "ID_zakaznika")
+    VALUES (p_termin, p_id_auta, p_id_zakaznika)
+    RETURNING "ID_opravy" INTO v_oprava_id;
 
--- najde vsechny vozy Skoda, ktere byly opravovany
-SELECT * FROM "Vozidlo"
-NATURAL JOIN "Oprava"
-WHERE "Znacka" = 'Skoda';
+    FOR i IN 1..p_cinnosti.COUNT LOOP
+        INSERT INTO "RelCinnostiOpravy" ("ID_opravy", "ID_cinnosti")
+        VALUES (v_oprava_id, p_cinnosti(i));
+    END LOOP;
 
+    COMMIT;
+END;
+/
 
--- najde vsechny zakazniky, kteri maji auto znacky Skoda
-SELECT "Jmeno", "Prijmeni" FROM "Zakaznik"
-NATURAL JOIN "Oprava"
-NATURAL JOIN "Vozidlo"
-WHERE "Znacka" = 'Skoda';
+-- Procedura ktera odstranuje zaznam z tabulky Zakaznik, ale pred jeho odstranenim kontroluje, zda nema zakaznik nejake nedokoncene opravy
+CREATE OR REPLACE PROCEDURE odstraneni_zakaznika(
+    p_customer_id INT
+) AS
+    v_repair_count INT;
+BEGIN
+    SELECT COUNT(*)
+    INTO v_repair_count
+    FROM "Oprava"
+    WHERE "ID_zakaznika" = p_customer_id;
 
-
--- najde vsechny cinnosti provedene behem opravy s id 2
-SELECT "Nazev_cinnosti" FROM "Vykonava_cinnost"
-NATURAL JOIN "RelCinnostiOpravy"
-WHERE "ID_opravy" = 2;
-
-
--- spocte opravy podle znacky auta
-SELECT v."Znacka", COUNT(o."ID_opravy") FROM "Oprava" o
-JOIN "Vozidlo" v ON o."ID_auta" = v."ID_auta"
-GROUP BY v."Znacka";
-
-
--- najde vsechny mechaniky, vypise jmeno a pocet jimy provedenych cinnosti
-SELECT a."ID_mechanika", a."Jmeno", a."Prijmeni", COUNT("ID_opravy") FROM "Automechanik" a
-LEFT JOIN "Vykonava_cinnost" vc ON a."ID_mechanika" = vc."ID_mechanika"
-LEFT JOIN "RelCinnostiOpravy" rc ON vc."ID_cinnosti" = rc."ID_cinnosti"
-GROUP BY a."ID_mechanika", a."Jmeno", a."Prijmeni";
-
-
--- najde vsechna auta, ktera byla opravovana
-SELECT * FROM "Vozidlo" v
-WHERE EXISTS (
-    SELECT 1
-    FROM "Oprava" o
-    WHERE o."ID_auta" = v."ID_auta"
-);
-
-
--- najde vsechny zakazniky, kteri platili prevodem
-SELECT * FROM "Zakaznik"
-WHERE "ID_zakaznika" IN (
-    SELECT DISTINCT "ID_zakaznika" FROM "Oprava"
-    NATURAL JOIN "Faktura"
-    WHERE "Forma_uhrady" = 'Prevodem'
-);
-
+    IF v_repair_count > 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Nelze odstranit zákazníka, který má nedokončené opravy.');
+    ELSE
+        DELETE FROM "Zakaznik" WHERE "ID_zakaznika" = p_customer_id;
+        COMMIT;
+    END IF;
+END;
+/
