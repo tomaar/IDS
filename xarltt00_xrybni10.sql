@@ -105,6 +105,8 @@ INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ")
 VALUES ('Skoda', 'Fabia', 'DEF456');
 INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ")
 VALUES ('Skoda', 'Superb', 'GHI789');
+INSERT INTO "Vozidlo" ("Znacka", "Model", "SPZ")
+VALUES ('Volkswagen', 'Golf', 'JKL321');
 
 INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_mechanika")
 VALUES ('Vymena brzdovych desticek', 120, 2);
@@ -114,6 +116,8 @@ INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_mechanika")
 VALUES ('Lakovani', 90, 2);
 INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_mechanika")
 VALUES ('Vymena svetel', 30, 1);
+INSERT INTO "Vykonava_cinnost" ("Nazev_cinnosti", "cas", "ID_mechanika")
+VALUES ('Vymena brzdovych desticek', 120, 3);
 
 INSERT INTO "Oprava" ("Termin", "ID_auta", "ID_zakaznika")
 VALUES (TO_DATE('2024-03-25', 'yyyy/mm/dd'), 1, 1);
@@ -121,6 +125,8 @@ INSERT INTO "Oprava" ("Termin", "ID_auta", "ID_zakaznika")
 VALUES (TO_DATE('2024-03-27', 'yyyy/mm/dd'), 2, 2);
 INSERT INTO "Oprava" ("Termin", "ID_auta", "ID_zakaznika")
 VALUES (TO_DATE('2024-03-27', 'yyyy/mm/dd'), 3, 3);
+INSERT INTO "Oprava" ("Termin", "ID_auta", "ID_zakaznika")
+VALUES (TO_DATE('2024-03-27', 'yyyy/mm/dd'), 1, 3);
 
 
 INSERT INTO "RelCinnostiOpravy" ("ID_opravy", "ID_cinnosti")
@@ -131,6 +137,8 @@ INSERT INTO "RelCinnostiOpravy" ("ID_opravy", "ID_cinnosti")
 VALUES (2, 3);
 INSERT INTO "RelCinnostiOpravy" ("ID_opravy", "ID_cinnosti")
 VALUES (3, 4);
+INSERT INTO "RelCinnostiOpravy" ("ID_opravy", "ID_cinnosti")
+VALUES (4, 5);
 
 
 INSERT INTO "Faktura" ("Datum_splatnosti", "Celkova_castka", "Forma_uhrady", "ID_opravy")
@@ -147,58 +155,110 @@ INSERT INTO "Material" ("Nazev", "Porizovaci_cena")
 VALUES ('Olej', 200);
 
 
+-- -- najde vsechny vozy Skoda, ktere jsou v databazi
+-- SELECT * FROM "Vozidlo"
+-- WHERE "Znacka" = 'Skoda';
+-- 
+-- 
+-- -- najde vsechny vozy Skoda, ktere byly opravovany
+-- SELECT * FROM "Vozidlo"
+-- NATURAL JOIN "Oprava"
+-- WHERE "Znacka" = 'Skoda';
+-- 
+-- 
+-- -- najde vsechny zakazniky, kteri maji auto znacky Skoda
+-- SELECT "Jmeno", "Prijmeni" FROM "Zakaznik"
+-- NATURAL JOIN "Oprava"
+-- NATURAL JOIN "Vozidlo"
+-- WHERE "Znacka" = 'Skoda';
+-- 
+-- 
+-- -- najde vsechny cinnosti provedene behem opravy s id 2
+-- SELECT "Nazev_cinnosti" FROM "Vykonava_cinnost"
+-- NATURAL JOIN "RelCinnostiOpravy"
+-- WHERE "ID_opravy" = 2;
+-- 
+-- 
+-- -- spocte opravy podle znacky auta
+-- SELECT v."Znacka", COUNT(o."ID_opravy") FROM "Oprava" o
+-- JOIN "Vozidlo" v ON o."ID_auta" = v."ID_auta"
+-- GROUP BY v."Znacka";
+-- 
+-- 
+-- -- najde vsechny mechaniky, vypise jmeno a pocet jimy provedenych cinnosti
+-- SELECT a."ID_mechanika", a."Jmeno", a."Prijmeni", COUNT("ID_opravy") FROM "Automechanik" a
+-- LEFT JOIN "Vykonava_cinnost" vc ON a."ID_mechanika" = vc."ID_mechanika"
+-- LEFT JOIN "RelCinnostiOpravy" rc ON vc."ID_cinnosti" = rc."ID_cinnosti"
+-- GROUP BY a."ID_mechanika", a."Jmeno", a."Prijmeni";
+-- 
+-- 
+-- -- najde vsechna auta, ktera byla opravovana
+-- SELECT * FROM "Vozidlo" v
+-- WHERE EXISTS (
+--     SELECT 1
+--     FROM "Oprava" o
+--     WHERE o."ID_auta" = v."ID_auta"
+-- );
+-- 
+-- 
+-- -- najde vsechny zakazniky, kteri platili prevodem
+-- SELECT * FROM "Zakaznik"
+-- WHERE "ID_zakaznika" IN (
+--     SELECT DISTINCT "ID_zakaznika" FROM "Oprava"
+--     NATURAL JOIN "Faktura"
+--     WHERE "Forma_uhrady" = 'Prevodem'
+-- );
 
--- najde vsechny vozy Skoda, ktere jsou v databazi
-SELECT * FROM "Vozidlo"
-WHERE "Znacka" = 'Skoda';
+
+-- udeleni prav uzivateli
+GRANT ALL ON "Specialista" TO xrybni10;
+GRANT ALL ON "Zakaznik" TO xrybni10;
+GRANT ALL ON "Oprava" TO xrybni10;
+GRANT ALL ON "Vozidlo" TO xrybni10;
+GRANT ALL ON "Material" TO xrybni10;
+GRANT ALL ON "Faktura" TO xrybni10;
+GRANT ALL ON "Vykonava_cinnost" TO xrybni10;
+GRANT ALL ON "Automechanik" TO xrybni10;
+GRANT ALL ON "RelCinnostiOpravy" TO xrybni10;
+-- todo: view + procedures
+
+-- zobrazeni prav uzivatelu
+SELECT grantee, table_name, privilege
+FROM all_tab_privs
+WHERE table_name = 'Specialista';
 
 
--- najde vsechny vozy Skoda, ktere byly opravovany
-SELECT * FROM "Vozidlo"
-NATURAL JOIN "Oprava"
-WHERE "Znacka" = 'Skoda';
+-- spocte pocet aut podle zeme puvodu
+WITH auta AS (
+    SELECT 
+        "ID_auta", 
+        "Znacka", 
+        "SPZ",
+        CASE
+            WHEN "Znacka" = 'Skoda' THEN 'CZ'
+            WHEN "Znacka" = 'Ford' THEN 'US'
+            WHEN "Znacka" = 'Volkswagen' THEN 'DE'
+            ELSE 'Jine'
+        END AS "Zeme_puvodu"
+    FROM
+        "Vozidlo"
+)
+SELECT "Zeme_puvodu", COUNT("Zeme_puvodu")
+FROM auta
+GROUP BY "Zeme_puvodu";
 
 
--- najde vsechny zakazniky, kteri maji auto znacky Skoda
-SELECT "Jmeno", "Prijmeni" FROM "Zakaznik"
-NATURAL JOIN "Oprava"
-NATURAL JOIN "Vozidlo"
-WHERE "Znacka" = 'Skoda';
+-- ukazkove provedeni SELECT dotazu
+SELECT v."Znacka", v."Model", COUNT(o."ID_opravy") AS Pocet_oprav
+FROM "Vozidlo" v
+JOIN "Oprava" o ON v."ID_auta" = o."ID_auta"
+GROUP BY v."Znacka", v."Model";
 
-
--- najde vsechny cinnosti provedene behem opravy s id 2
-SELECT "Nazev_cinnosti" FROM "Vykonava_cinnost"
-NATURAL JOIN "RelCinnostiOpravy"
-WHERE "ID_opravy" = 2;
-
-
--- spocte opravy podle znacky auta
-SELECT v."Znacka", COUNT(o."ID_opravy") FROM "Oprava" o
-JOIN "Vozidlo" v ON o."ID_auta" = v."ID_auta"
-GROUP BY v."Znacka";
-
-
--- najde vsechny mechaniky, vypise jmeno a pocet jimy provedenych cinnosti
-SELECT a."ID_mechanika", a."Jmeno", a."Prijmeni", COUNT("ID_opravy") FROM "Automechanik" a
-LEFT JOIN "Vykonava_cinnost" vc ON a."ID_mechanika" = vc."ID_mechanika"
-LEFT JOIN "RelCinnostiOpravy" rc ON vc."ID_cinnosti" = rc."ID_cinnosti"
-GROUP BY a."ID_mechanika", a."Jmeno", a."Prijmeni";
-
-
--- najde vsechna auta, ktera byla opravovana
-SELECT * FROM "Vozidlo" v
-WHERE EXISTS (
-    SELECT 1
-    FROM "Oprava" o
-    WHERE o."ID_auta" = v."ID_auta"
-);
-
-
--- najde vsechny zakazniky, kteri platili prevodem
-SELECT * FROM "Zakaznik"
-WHERE "ID_zakaznika" IN (
-    SELECT DISTINCT "ID_zakaznika" FROM "Oprava"
-    NATURAL JOIN "Faktura"
-    WHERE "Forma_uhrady" = 'Prevodem'
-);
+-- CREATE INDEX idx_oprava_id_auta ON "Oprava" ("ID_auta");
+EXPLAIN PLAN FOR
+SELECT v."Znacka", v."Model", COUNT(o."ID_opravy") AS Pocet_oprav
+FROM "Vozidlo" v
+JOIN "Oprava" o ON v."ID_auta" = o."ID_auta"
+GROUP BY v."Znacka", v."Model";
+SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY());
 
