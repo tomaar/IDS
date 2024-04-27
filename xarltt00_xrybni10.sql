@@ -7,6 +7,7 @@ DROP TABLE "Faktura" CASCADE CONSTRAINTS;
 DROP TABLE "Vykonava_cinnost" CASCADE CONSTRAINTS;
 DROP TABLE "Automechanik" CASCADE CONSTRAINTS;
 DROP TABLE "RelCinnostiOpravy" CASCADE CONSTRAINTS;
+DROP MATERIALIZED VIEW "pocet_oprav";
 
 CREATE TABLE "Automechanik" (
     "ID_mechanika" INT GENERATED AS IDENTITY PRIMARY KEY,
@@ -222,18 +223,6 @@ BEGIN
 END;
 /
 
--- udeleni prav uzivateli
-GRANT ALL ON "Specialista" TO xrybni10;
-GRANT ALL ON "Zakaznik" TO xrybni10;
-GRANT ALL ON "Oprava" TO xrybni10;
-GRANT ALL ON "Vozidlo" TO xrybni10;
-GRANT ALL ON "Material" TO xrybni10;
-GRANT ALL ON "Faktura" TO xrybni10;
-GRANT ALL ON "Vykonava_cinnost" TO xrybni10;
-GRANT ALL ON "Automechanik" TO xrybni10;
-GRANT ALL ON "RelCinnostiOpravy" TO xrybni10;
--- todo: view + procedures
-
 -- zobrazeni prav uzivatelu
 SELECT grantee, table_name, privilege
 FROM all_tab_privs
@@ -287,3 +276,25 @@ JOIN "Oprava" o ON v."ID_auta" = o."ID_auta"
 GROUP BY v."Znacka", v."Model";
 SELECT * FROM TABLE(DBMS_XPLAN.DISPLAY());
 
+CREATE MATERIALIZED VIEW "pocet_oprav" AS
+SELECT v."Znacka", v."Model", COUNT(o."ID_opravy") AS Pocet_oprav
+FROM "Vozidlo" v
+JOIN "Oprava" o ON v."ID_auta" = o."ID_auta"
+GROUP BY v."Znacka", v."Model";
+SELECT * FROM "pocet_oprav";
+
+
+-- udeleni prav uzivateli
+GRANT ALL ON "Specialista" TO xrybni10;
+GRANT ALL ON "Zakaznik" TO xrybni10;
+GRANT ALL ON "Oprava" TO xrybni10;
+GRANT ALL ON "Vozidlo" TO xrybni10;
+GRANT ALL ON "Material" TO xrybni10;
+GRANT ALL ON "Faktura" TO xrybni10;
+GRANT ALL ON "Vykonava_cinnost" TO xrybni10;
+GRANT ALL ON "Automechanik" TO xrybni10;
+GRANT ALL ON "RelCinnostiOpravy" TO xrybni10;
+GRANT EXECUTE ON vytvoreni_opravy TO xrybni10;
+GRANT EXECUTE ON odstraneni_zakaznika TO xrybni10;
+GRANT ALL ON "pocet_oprav" TO xrybni10;
+-- todo: view + procedures
